@@ -2,9 +2,7 @@
 
 A peer-to-peer rental platform API built with Node.js, Express, and MongoDB.
 
-## SPRINT1
-
-## Features
+## SPRINT1Features
 
 - User authentication (register/login)
 - Item management (CRUD operations)
@@ -28,3 +26,5 @@ A peer-to-peer rental platform API built with Node.js, Express, and MongoDB.
 2. Run `npm install`
 3. Create `.env` file with your MongoDB connection string
 4. Run `node server.js`
+
+## Youtube: https://youtu.be/_oPPr1LLhsg
