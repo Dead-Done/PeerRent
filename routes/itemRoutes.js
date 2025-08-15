@@ -17,4 +17,12 @@ router.put('/:id', itemController.updateItem);
 // DELETE /api/items/:id -> Delete an item
 router.delete('/:id', itemController.deleteItem);
 
+// POST /api/items/:id with _method=DELETE -> Delete an item (fallback for forms)
+router.post('/:id', (req, res, next) => {
+  if (req.body._method === 'DELETE') {
+    return itemController.deleteItem(req, res);
+  }
+  next();
+});
+
 module.exports = router;

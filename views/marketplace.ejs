@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace - PeerRent</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .nav a {
+            text-decoration: none;
+            color: #007bff;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .nav a:hover {
+            background-color: #f8f9fa;
+        }
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .item-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .item-name {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        .item-description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .item-price {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .no-items {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PeerRent Marketplace</h1>
+        <p>Find items to rent from your community</p>
+    </div>
+
+    <div class="nav">
+        <a href="/">Home</a>
+        <a href="/items/new">List New Item</a>
+        <a href="/my-listings">My Listings</a>
+    </div>
+
+    <div class="items-grid">
+        <% if (items && items.length > 0) { %>
+            <% items.forEach(item => { %>
+                <div class="item-card">
+                    <h2 class="item-name"><%= item.name %></h2>
+                    <p class="item-description"><%= item.description %></p>
+                    <p class="item-price">৳<%= item.dailyPrice %>/day</p>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="no-items">
+                <p>No items are currently available.</p>
+                <p>Be the first to list an item for rent!</p>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

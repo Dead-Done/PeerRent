@@ -189,3 +189,136 @@ const itemRoutes = require('./routes/itemRoutes');
 
 // Use the item routes for any request starting with /api/items
 app.use('/api/items', itemRoutes);
+
+## Sprint 2 Goal: Frontend Views & User Interaction
+
+This sprint focuses on building the user interface (the "Views" in MVC) for the backend logic created in Sprint 1. By the end of this sprint, a user will be able to visually interact with the application to see, create, and manage their rental listings.
+
+### Features:
+- **Feature 4:** Develop the EJS view for the main marketplace page to display all available rental items.
+- **Feature 5:** Develop the EJS forms for creating and editing item listings for a logged-in user.
+- **Feature 6:** Create the "My Listings" page where a user can view and manage only the items they have posted.
+
+Feature 4: Develop the EJS view for the main marketplace page.
+This page will show every available item to any visitor.
+
+Create the View File: In your views folder, create a file named marketplace.ejs. Add code to loop through an array of items and display their details.
+
+HTML
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Marketplace - PeerRent</title>
+</head>
+<body>
+    <h1>All Available Items</h1>
+    <div>
+        <% if (items.length > 0) { %>
+            <% items.forEach(item => { %>
+                <div>
+                    <h2><%= item.name %></h2>
+                    <p><%= item.description %></p>
+                    <p><b>Price:</b> $<%= item.dailyPrice %>/day</p>
+                </div>
+                <hr>
+            <% }) %>
+        <% } else { %>
+            <p>No items are currently available.</p>
+        <% } %>
+    </div>
+</body>
+</html>
+Update the Controller: In controllers/itemController.js, ensure your getAllItems function fetches all items and renders this new EJS file, passing the item data to it.
+
+JavaScript
+
+// controllers/itemController.js
+exports.getAllItems = async (req, res) => {
+  try {
+    const items = await Item.find({ status: 'available' });
+    res.render('marketplace', { items: items });
+  } catch (err) {
+    res.status(500).send('Server Error');
+  }
+};
+Feature 5: Develop the EJS forms for creating and editing item listings.
+This involves the form a user will use to add a new item.
+
+Create the "New Item" View: In your views folder, create a file named newItem.ejs. This file will contain an HTML form.
+
+HTML
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List a New Item</title>
+</head>
+<body>
+    <h1>List Your Item for Rent</h1>
+    <form action="/api/items" method="POST">
+        <input type="text" name="name" placeholder="Item Name" required>
+        <textarea name="description" placeholder="Item Description" required></textarea>
+        <input type="number" name="dailyPrice" placeholder="Price per day" required>
+        <button type="submit">List My Item</button>
+    </form>
+</body>
+</html>
+Enable Form Data Parsing: In your main server.js file, add the following middleware to ensure your server can understand the data coming from the form.
+
+JavaScript
+
+// In server.js
+app.use(express.urlencoded({ extended: true }));
+Create a Route to Display the Form: You need a route that shows the newItem.ejs page to the user. You can create a new routes/viewRoutes.js file for this.
+
+JavaScript
+
+// routes/viewRoutes.js
+const express = require('express');
+const router = express.Router();
+
+// This route will display the form to create a new item
+router.get('/items/new', (req, res) => {
+  res.render('newItem');
+});
+
+module.exports = router;
+Remember to link this new route file in your server.js.
+
+Feature 6: Create the "My Listings" page.
+This is a private page where a user can see and manage only the items they have posted.
+
+Create the View File: In the views folder, create myListings.ejs.
+
+HTML
+
+<!DOCTYPE html>
+<html lang="en">
+    <body>
+    <h1>My Listings</h1>
+    </body>
+</html>
+Create the Controller Function: In controllers/itemController.js, add a new function. This function will find all items where the owner ID matches the currently logged-in user's ID.
+
+JavaScript
+
+// controllers/itemController.js
+exports.getItemsByUser = async (req, res) => {
+  try {
+    // This assumes your authentication process adds a `user` object to the request
+    const items = await Item.find({ owner: req.user.id });
+    res.render('myListings', { items: items });
+  } catch (err) {
+    res.status(500).send('Server Error');
+  }
+};
+Create the Route: Add a new route that points to this controller function. You should protect this route with authentication middleware to ensure only logged-in users can access it.
+
+JavaScript
+
+// In your routes/viewRoutes.js or a similar file
+// The `isAuthenticated` part is placeholder for your actual authentication middleware
+router.get('/my-listings', isAuthenticated, itemController.getItemsByUser);

@@ -7,7 +7,7 @@ const itemSchema = new mongoose.Schema({
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User', // This links an item to a user
-    required: true
+    required: false // Made optional for now since we haven't implemented frontend auth yet
   }
 }, { timestamps: true });
 
