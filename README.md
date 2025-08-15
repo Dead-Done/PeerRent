@@ -183,9 +183,9 @@ PeerRent/
 
 ## 🎥 Demo
 
-Watch the project demo: 
-###Sprint 1[YouTube Video](https://youtu.be/_oPPr1LLhsg)
-###Sprint 2[YouTube Video](https://youtu.be/Wb7Vj1PFbMI)
+Watch the project's progress through our sprint demos:
+- **Sprint 1 (Backend & API):** [Watch on YouTube](https://youtu.be/_oPPr1LLhsg)
+- **Sprint 2 (Frontend UI):** [Watch on YouTube](https://youtu.be/Wb7Vj1PFbMI)
 
 ---
 
