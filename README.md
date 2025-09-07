@@ -20,12 +20,25 @@ PeerRent is a community-driven platform where users can rent items from each oth
 - **My Listings Page**: Manage your own rental items
 - **Responsive Design**: Modern, mobile-friendly interface
 
+### Sprint 3 - Rental & Review System ✅
+- **Rental Request System**: Request to rent items from other users
+- **Review System**: Rate and review users after rentals
+- **User Profile Pages**: View user profiles with ratings and reviews
+- **Search Functionality**: Search for items by name in the marketplace
+
+### Sprint 4 - Authentication & Security ✅
+- **JWT Authentication Middleware**: Protect routes with JWT tokens
+- **Route Protection**: Secure user-specific functionality
+- **Owner-based Item Management**: Users can only manage their own items
+- **Authenticated Rental System**: Secure rental request creation and management
+
 ## 🛠️ Technology Stack
 
 - **Backend**: Node.js, Express.js
 - **Database**: MongoDB with Mongoose
 - **Frontend**: EJS templating engine
-- **Authentication**: JWT (JSON Web Tokens)
+- **Authentication**: JWT (JSON Web Tokens) with Bearer token strategy
+- **Security**: Protected routes with authentication middleware
 - **Styling**: CSS3 with responsive design
 - **Form Handling**: Method-override for PUT/DELETE operations
 
@@ -42,11 +55,18 @@ PeerRent is a community-driven platform where users can rent items from each oth
 - `PUT /api/items/:id` - Update item
 - `DELETE /api/items/:id` - Delete item
 
+### Rentals
+- `POST /rentals/:itemId` - Create rental request for an item
+- `POST /rentals/:rentalId/status` - Update rental request status
+
 ### Frontend Pages
 - `GET /` - Home page
-- `GET /marketplace` - Browse all items
+- `GET /marketplace` - Browse all items (with search)
 - `GET /items/new` - Create new item form
 - `GET /my-listings` - Manage your items
+- `GET /my-rentals` - View your rental requests
+- `GET /manage-rentals` - Manage requests for your items
+- `GET /users/:userId/profile` - View user profile with reviews
 
 ## 🚀 Quick Start
 
@@ -95,23 +115,55 @@ PeerRent is a community-driven platform where users can rent items from each oth
 PeerRent/
 ├── controllers/          # Business logic
 │   ├── itemController.js
-│   └── userController.js
+│   ├── userController.js
+│   └── rentalController.js
+├── middleware/           # Authentication & security
+│   └── auth.js
 ├── models/              # Database schemas
 │   ├── Item.js
-│   └── User.js
+│   ├── User.js
+│   ├── RentalRequest.js
+│   └── Review.js
 ├── routes/              # API and view routes
 │   ├── itemRoutes.js
 │   ├── userRoutes.js
+│   ├── rentalRoutes.js
 │   └── viewRoutes.js
 ├── views/               # EJS templates
 │   ├── home.ejs
 │   ├── marketplace.ejs
 │   ├── newItem.ejs
-│   └── myListings.ejs
+│   ├── myListings.ejs
+│   ├── profile.ejs
+│   ├── my-rentals.ejs
+│   └── manage-rentals.ejs
 ├── server.js            # Main application file
 ├── package.json
 └── README.md
 ```
+
+## 🔐 Authentication & Security
+
+The application uses JWT (JSON Web Token) authentication with Bearer token strategy:
+
+### Protected Routes
+- **Item Management**: Creating, updating, deleting items
+- **Rental System**: Creating and managing rental requests  
+- **User Pages**: My listings, my rentals, manage rentals
+- **Item Forms**: New item creation, item editing
+
+### Public Routes
+- **Marketplace**: Browse all items and search
+- **User Profiles**: View any user's profile and reviews
+- **Home Page**: Application landing page
+
+### API Authentication
+Include JWT token in Authorization header:
+```
+Authorization: Bearer <your-jwt-token>
+```
+
+See `AUTHENTICATION_TESTING.md` for detailed testing instructions.
 
 ## 🎯 User Flow
 
@@ -144,8 +196,31 @@ PeerRent/
 {
   name: String (required),
   description: String (required),
-  dailyPrice: Number (required), // Price in BDT (Taka)
+  dailyPrice: Number (required), 
   owner: ObjectId (references User, required),
+  timestamps: true
+}
+```
+
+**RentalRequest Model:**
+```javascript
+{
+  item: ObjectId (references Item, required),
+  renter: ObjectId (references User, required),
+  owner: ObjectId (references User, required),
+  status: String (enum: ['pending', 'accepted', 'declined', 'completed']),
+  timestamps: true
+}
+```
+
+**Review Model:**
+```javascript
+{
+  rental: ObjectId (references RentalRequest, required),
+  reviewer: ObjectId (references User, required),
+  reviewee: ObjectId (references User, required),
+  rating: Number (1-5, required),
+  comment: String (required),
   timestamps: true
 }
 ```

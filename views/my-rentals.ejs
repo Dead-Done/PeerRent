@@ -1,0 +1,92 @@
+<!-- views/my-rentals.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Rentals - PeerRent</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .nav a {
+            text-decoration: none;
+            color: #007bff;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .nav a:hover {
+            background-color: #f8f9fa;
+        }
+        .rental-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .status.pending { background-color: #fff3cd; color: #856404; }
+        .status.accepted { background-color: #d4edda; color: #155724; }
+        .status.declined { background-color: #f8d7da; color: #721c24; }
+        .status.completed { background-color: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>My Rental Requests</h1>
+        <p>Items you have requested to rent</p>
+    </div>
+
+    <div class="nav">
+        <a href="/">Home</a>
+        <a href="/marketplace">Marketplace</a>
+        <a href="/my-listings">My Listings</a>
+        <a href="/manage-rentals">Manage Rentals</a>
+    </div>
+
+    <div class="rental-requests">
+        <% if (rentalRequests && rentalRequests.length > 0) { %>
+            <% rentalRequests.forEach(request => { %>
+                <div class="rental-card">
+                    <h3><%= request.item.name %></h3>
+                    <p><strong>Description:</strong> <%= request.item.description %></p>
+                    <p><strong>Daily Price:</strong> ৳<%= request.item.dailyPrice %></p>
+                    <p><strong>Owner:</strong> <%= request.owner.email %></p>
+                    <p><strong>Status:</strong> <span class="status <%= request.status %>"><%= request.status.toUpperCase() %></span></p>
+                    <p><strong>Requested:</strong> <%= new Date(request.createdAt).toLocaleDateString() %></p>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="rental-card">
+                <p><em>Your rental requests will appear here when you request to rent items from the marketplace.</em></p>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

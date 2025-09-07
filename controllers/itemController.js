@@ -3,12 +3,12 @@ const Item = require('../models/Item');
 // Create a new item
 exports.createItem = async (req, res) => {
   try {
-    // For now, we'll create items without an owner since we haven't implemented frontend auth
+    // Now we can use the authenticated user's ID as the owner
     const itemData = {
       name: req.body.name,
       description: req.body.description,
-      dailyPrice: req.body.dailyPrice
-      // owner will be undefined, which is fine since we made it optional
+      dailyPrice: req.body.dailyPrice,
+      owner: req.user.id // Use the authenticated user's ID
     };
     
     const newItem = new Item(itemData);
@@ -42,7 +42,15 @@ exports.getAllItems = async (req, res) => {
 // Get all items for marketplace view
 exports.getMarketplace = async (req, res) => {
   try {
-    const items = await Item.find();
+    let query = {};
+    // Check if a search query exists in the URL (req.query.search)
+    if (req.query.search && req.query.search.trim() !== '') {
+      // If it exists, add a 'name' property to the 'query' object.
+      // The value should be a case-insensitive regular expression that matches the search term.
+      query.name = { $regex: req.query.search, $options: 'i' };
+    }
+    // Use the 'query' object in your Item.find() call.
+    const items = await Item.find(query);
     res.render('marketplace', { items: items });
   } catch (err) {
     res.status(500).send('Server Error');
@@ -63,14 +71,25 @@ exports.getItemById = async (req, res) => {
 // Update an item
 exports.updateItem = async (req, res) => {
   try {
+    // First, find the item to verify ownership
+    const existingItem = await Item.findById(req.params.id);
+    if (!existingItem) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    // Check if the authenticated user owns this item
+    if (existingItem.owner.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to update this item' });
+    }
+
     const updateData = {
       name: req.body.name,
       description: req.body.description,
       dailyPrice: req.body.dailyPrice
+      // Note: owner should not be updatable
     };
     
     const item = await Item.findByIdAndUpdate(req.params.id, updateData, { new: true });
-    if (!item) return res.status(404).json({ message: 'Item not found' });
     
     // Check if request is from form submission (redirect) or API call (JSON response)
     if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
@@ -90,8 +109,18 @@ exports.updateItem = async (req, res) => {
 // Delete an item
 exports.deleteItem = async (req, res) => {
   try {
+    // First, find the item to verify ownership
+    const existingItem = await Item.findById(req.params.id);
+    if (!existingItem) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    // Check if the authenticated user owns this item
+    if (existingItem.owner.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to delete this item' });
+    }
+
     const item = await Item.findByIdAndDelete(req.params.id);
-    if (!item) return res.status(404).json({ message: 'Item not found' });
     
     // Check if request is from form submission (redirect) or API call (JSON response)
     if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
@@ -111,9 +140,8 @@ exports.deleteItem = async (req, res) => {
 // Get items by user (for My Listings page)
 exports.getItemsByUser = async (req, res) => {
   try {
-    // For now, we'll get all items since authentication isn't fully implemented
-    // In a real app, you'd use: const items = await Item.find({ owner: req.user.id });
-    const items = await Item.find();
+    // Now we can filter by the authenticated user's items
+    const items = await Item.find({ owner: req.user.id });
     res.render('myListings', { items: items });
   } catch (err) {
     res.status(500).send('Server Error');
@@ -127,6 +155,12 @@ exports.getEditItem = async (req, res) => {
     if (!item) {
       return res.status(404).send('Item not found');
     }
+
+    // Check if the authenticated user owns this item
+    if (item.owner.toString() !== req.user.id) {
+      return res.status(403).send('Not authorized to edit this item');
+    }
+
     res.render('editItem', { item: item });
   } catch (err) {
     res.status(500).send('Server Error');

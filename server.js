@@ -27,12 +27,16 @@ mongoose.connect(process.env.MONGODB_URI)  // Use environment variable here
 const itemRoutes = require('./routes/itemRoutes');
 const userRoutes = require('./routes/userRoutes');
 const viewRoutes = require('./routes/viewRoutes');
+const rentalRoutes = require('./routes/rentalRoutes');
 
 // Use the item routes for any request starting with /api/items
 app.use('/api/items', itemRoutes);
 
 // Use the user routes for any request starting with /api/users
 app.use('/api/users', userRoutes);
+
+// Use the rental routes for any request starting with /rentals
+app.use('/rentals', rentalRoutes);
 
 // Use the view routes for frontend pages
 app.use('/', viewRoutes);
