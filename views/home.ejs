@@ -60,15 +60,40 @@
             color: white;
             border: 2px solid white;
         }
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            text-align: center;
+            z-index: 100;
+        }
+        .nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        body {
+            padding-top: 70px;
+        }
     </style>
 </head>
 <body>
+    <%- include('partials/header') %>
+    
     <div class="container">
         <h1>PeerRent</h1>
         <p>Share and discover items in your community. Rent what you need, earn from what you have.</p>
         <div class="cta-buttons">
             <a href="/marketplace" class="btn btn-primary">Browse Marketplace</a>
-            <a href="/items/new" class="btn btn-secondary">List Your Item</a>
+            <a href="/register" class="btn btn-secondary">Join Community</a>
+            <a href="/login" class="btn btn-secondary">Login</a>
         </div>
     </div>
 </body>

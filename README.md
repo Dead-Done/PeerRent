@@ -32,13 +32,21 @@ PeerRent is a community-driven platform where users can rent items from each oth
 - **Owner-based Item Management**: Users can only manage their own items
 - **Authenticated Rental System**: Secure rental request creation and management
 
+### Sprint 5 - Hybrid OTP Authentication ✅
+- **Passwordless Login**: Revolutionary hybrid OTP system eliminates passwords
+- **4-digit Secret PIN**: User-memorized PIN for enhanced security
+- **Email-based Codes**: Dynamic 4-digit codes sent via email
+- **8-digit Login Key**: Combination of PIN + email code for authentication
+- **Email Integration**: Nodemailer with Mailtrap for development testing
+
 ## 🛠️ Technology Stack
 
 - **Backend**: Node.js, Express.js
 - **Database**: MongoDB with Mongoose
 - **Frontend**: EJS templating engine
-- **Authentication**: JWT (JSON Web Tokens) with Bearer token strategy
-- **Security**: Protected routes with authentication middleware
+- **Authentication**: Hybrid OTP System (PIN + Email Code) with JWT tokens
+- **Email Service**: Nodemailer with Mailtrap for development
+- **Security**: Passwordless authentication with bcrypt PIN hashing
 - **Styling**: CSS3 with responsive design
 - **Form Handling**: Method-override for PUT/DELETE operations
 
@@ -113,6 +121,8 @@ PeerRent is a community-driven platform where users can rent items from each oth
 
 ```
 PeerRent/
+├── config/               # Configuration files
+│   └── mailer.js
 ├── controllers/          # Business logic
 │   ├── itemController.js
 │   ├── userController.js
@@ -144,7 +154,19 @@ PeerRent/
 
 ## 🔐 Authentication & Security
 
-The application uses JWT (JSON Web Token) authentication with Bearer token strategy:
+The application uses a revolutionary **Hybrid OTP Authentication System** that eliminates passwords:
+
+### How It Works
+1. **Registration**: User provides email + 4-digit Secret PIN
+2. **Login Request**: User enters email, system sends 4-digit code to email
+3. **Login Completion**: User combines PIN + email code = 8-digit login key
+4. **JWT Token**: System validates and issues JWT for protected routes
+
+### Security Features
+- **Passwordless**: No passwords stored or transmitted
+- **Two-Factor**: PIN (something you know) + Email (something you have)
+- **Time-Limited**: Email codes expire after 10 minutes
+- **Hashed PINs**: User PINs are bcrypt-hashed in database
 
 ### Protected Routes
 - **Item Management**: Creating, updating, deleting items
@@ -163,7 +185,7 @@ Include JWT token in Authorization header:
 Authorization: Bearer <your-jwt-token>
 ```
 
-See `AUTHENTICATION_TESTING.md` for detailed testing instructions.
+See `HYBRID_OTP_TESTING.md` for detailed testing instructions.
 
 ## 🎯 User Flow
 

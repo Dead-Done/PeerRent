@@ -10,4 +10,7 @@ router.post('/:itemId', isAuthenticated, rentalController.createRentalRequest);
 // POST /rentals/:rentalId/status -> Update rental request status
 router.post('/:rentalId/status', isAuthenticated, rentalController.updateRentalStatus);
 
+// POST /rentals/:rentalId/review -> Submit a review for a rental
+router.post('/:rentalId/review', isAuthenticated, rentalController.postReview);
+
 module.exports = router;

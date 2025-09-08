@@ -1,0 +1,22 @@
+<!-- views/partials/header.ejs -->
+<nav class="nav">
+  <a href="/">Home</a>
+  <a href="/marketplace">Marketplace</a>
+  <% if (user) { %>
+    <!-- Links for LOGGED-IN users -->
+    <a href="/my-listings">My Listings</a>
+    <a href="/my-rentals">My Rentals</a>
+    <a href="/manage-rentals">Manage Rentals</a>
+    
+    <!-- ADD THIS CONDITIONAL LINK -->
+    <% if (user.role === 'admin') { %>
+      <a href="/admin" style="color: red; font-weight: bold;">Admin Dashboard</a>
+    <% } %>
+    
+    <a href="/api/users/logout">Logout (<%= user.email %>)</a>
+  <% } else { %>
+    <!-- Links for LOGGED-OUT users -->
+    <a href="/login">Login</a>
+    <a href="/register">Register</a>
+  <% } %>
+</nav>

@@ -1,14 +1,17 @@
 // controllers/rentalController.js
 const RentalRequest = require('../models/RentalRequest');
 const Item = require('../models/Item');
+const Review = require('../models/Review');
 
 // Logic for creating a new rental request
 exports.createRentalRequest = async (req, res) => {
   try {
     // Find the item by its ID from req.params.itemId
     const item = await Item.findById(req.params.itemId);
-    if (!item) {
-      return res.status(404).send('Item not found');
+
+    // This new check handles both a missing item AND an item with a missing owner.
+    if (!item || !item.owner) {
+      return res.status(404).send('Item not found or has no owner.');
     }
 
     // Prevent users from renting their own items
@@ -94,6 +97,90 @@ exports.getManageRentals = async (req, res) => {
       .populate('item')
       .populate('renter', 'email');
     res.render('manage-rentals', { rentalRequests });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+};
+
+// Get review page for a specific rental
+exports.getReviewPage = async (req, res) => {
+  try {
+    // Find the RentalRequest by its ID and populate necessary fields
+    const rentalRequest = await RentalRequest.findById(req.params.rentalId)
+      .populate('item')
+      .populate('owner', 'email')
+      .populate('renter', 'email');
+    
+    if (!rentalRequest) {
+      return res.status(404).send('Rental request not found');
+    }
+
+    // Check if the authenticated user is the renter (only renters can leave reviews)
+    if (rentalRequest.renter._id.toString() !== req.user.id) {
+      return res.status(403).send('Not authorized to review this rental');
+    }
+
+    // Check if rental is completed
+    if (rentalRequest.status !== 'completed') {
+      return res.status(400).send('Can only review completed rentals');
+    }
+
+    // Check if review already exists
+    const existingReview = await Review.findOne({ rental: req.params.rentalId });
+    if (existingReview) {
+      return res.status(400).send('Review already exists for this rental');
+    }
+
+    res.render('leave-review', { rentalRequest });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+};
+
+// Handle review submission
+exports.postReview = async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+
+    // Find the RentalRequest by its ID
+    const rentalRequest = await RentalRequest.findById(req.params.rentalId)
+      .populate('owner');
+    
+    if (!rentalRequest) {
+      return res.status(404).send('Rental request not found');
+    }
+
+    // Check if the authenticated user is the renter
+    if (rentalRequest.renter.toString() !== req.user.id) {
+      return res.status(403).send('Not authorized to review this rental');
+    }
+
+    // Check if rental is completed
+    if (rentalRequest.status !== 'completed') {
+      return res.status(400).send('Can only review completed rentals');
+    }
+
+    // Check if review already exists
+    const existingReview = await Review.findOne({ rental: req.params.rentalId });
+    if (existingReview) {
+      return res.status(400).send('Review already exists for this rental');
+    }
+
+    // Create a new Review document
+    const newReview = new Review({
+      rating: parseInt(rating),
+      comment,
+      rental: req.params.rentalId,
+      reviewer: req.user.id,
+      reviewee: rentalRequest.owner._id
+    });
+
+    await newReview.save();
+
+    // Redirect to the profile page of the person they just reviewed
+    res.redirect(`/users/${rentalRequest.owner._id}/profile`);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
