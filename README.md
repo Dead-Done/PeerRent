@@ -124,7 +124,6 @@ PeerRent is a community-driven platform where users can rent items from each oth
    ```env
    # Database Configuration
    MONGODB_URI=mongodb://localhost:27017/peerrent
-   # Or use MongoDB Atlas: mongodb+srv://username:yourpasswordhere@cluster.mongodb.net/peerrent
 
    # JWT Authentication
    JWT_SECRET=your_super_secret_jwt_key_here
