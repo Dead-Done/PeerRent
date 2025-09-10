@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - PeerRent</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .auth-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 2px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #218838;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            margin-top: 10px;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .instructions {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .instructions p {
+            margin-bottom: 0;
+            color: #333;
+        }
+        .email-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+        }
+        .auth-links {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .auth-links a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+        .nav {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .nav a {
+            color: #007bff;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/">Home</a>
+        <a href="/marketplace">Marketplace</a>
+        <a href="/login">Back to Login</a>
+    </div>
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>Verify Your Identity</h1>
+            <p>Complete your login with the hybrid OTP</p>
+        </div>
+
+        <div class="email-info">
+            <p>A 4-digit code has been sent to: <strong><%= email %></strong></p>
+        </div>
+
+        <div class="instructions">
+            <h3>How to create your 8-digit login key:</h3>
+            <p><strong>Step 1:</strong> Enter your 4-digit Secret PIN<br>
+               <strong>Step 2:</strong> Add the 4-digit code from your email<br>
+               <strong>Example:</strong> PIN: 1234, Email code: 5678 → Enter: 12345678</p>
+        </div>
+
+        <form action="/api/users/login/verify-otp" method="POST">
+            <input type="hidden" name="email" value="<%= email %>">
+            
+            <div class="form-group">
+                <label for="fullOtp">8-Digit Login Key:</label>
+                <input type="text" id="fullOtp" name="fullOtp" maxlength="8" pattern="[0-9]{8}" required placeholder="Enter 8 digits">
+            </div>
+
+            <button type="submit" class="btn">Complete Login</button>
+        </form>
+
+        <form action="/api/users/login/request-code" method="POST">
+            <input type="hidden" name="email" value="<%= email %>">
+            <button type="submit" class="btn btn-secondary">Resend Code</button>
+        </form>
+
+        <div class="auth-links">
+            <p><a href="/login">Try a different email address</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Ensure only numbers can be entered in the OTP field
+        document.getElementById('fullOtp').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Auto-focus the OTP input
+        document.getElementById('fullOtp').focus();
+    </script>
+</body>
+</html>

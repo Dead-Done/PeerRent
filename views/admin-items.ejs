@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Items - PeerRent</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; padding-top: 80px; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 20px; }
+        .title { margin: 0 0 10px 0; }
+        .subtitle { color: #666; margin: 0 0 20px 0; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 12px 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .table th { background: #fafafa; color: #333; }
+        .btn-danger { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        .header { background: linear-gradient(135deg, #dc3545, #721c24); color: white; padding: 24px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+    </head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Manage Items</h1>
+            <p class="subtitle">Total items: <strong><%= items.length %></strong></p>
+        </div>
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Owner</th>
+                        <th>Price/day</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% items.forEach(it => { %>
+                        <tr>
+                            <td><%= it.name %></td>
+                            <td><%= it.owner ? it.owner.email : '-' %></td>
+                            <td>$<%= it.dailyPrice %></td>
+                            <td><%= new Date(it.createdAt).toLocaleString() %></td>
+                            <td>
+                                <form action="/admin/items/<%= it._id %>/delete" method="POST" onsubmit="return confirm('Delete this item?')" style="display:inline;">
+                                    <button type="submit" class="btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+
+

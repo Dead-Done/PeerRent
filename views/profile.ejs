@@ -1,0 +1,113 @@
+<!-- views/profile.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - PeerRent</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .profile-header {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .profile-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .rating {
+            color: #ffc107;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .reviews-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .review-item {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+        .review-item:last-child {
+            border-bottom: none;
+        }
+        .review-rating {
+            color: #ffc107;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .review-comment {
+            color: #333;
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+        .review-author {
+            color: #666;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        .no-reviews {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+        .nav {
+            margin-bottom: 20px;
+        }
+        .nav a {
+            text-decoration: none;
+            color: #007bff;
+            padding: 8px 16px;
+            margin-right: 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .nav a:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/">Home</a>
+        <a href="/marketplace">Marketplace</a>
+        <a href="/my-listings">My Listings</a>
+    </div>
+
+    <div class="profile-header">
+        <h1>Profile: <%= profileUser.email %></h1>
+        <h2 class="rating">Average Rating: <%= averageRating %> / 5 ★</h2>
+    </div>
+
+    <div class="reviews-section">
+        <hr>
+        <h3>Reviews Received:</h3>
+        <% if (reviews.length > 0) { %>
+            <% reviews.forEach(review => { %>
+                <div class="review-item">
+                    <p class="review-rating"><strong>Rating:</strong> <%= review.rating %> Stars</p>
+                    <p class="review-comment"><strong>Comment:</strong> "<%= review.comment %>"</p>
+                    <p class="review-author"><em>- From: <%= review.reviewer.email %></em></p>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="no-reviews">
+                <p>This user has no reviews yet.</p>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

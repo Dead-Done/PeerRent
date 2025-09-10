@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Rentals - PeerRent</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; padding-top: 80px; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 20px; }
+        .title { margin: 0 0 10px 0; }
+        .subtitle { color: #666; margin: 0 0 20px 0; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 12px 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .table th { background: #fafafa; color: #333; }
+        .status { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: bold; }
+        .status-pending { background: #fff3cd; color: #916400; }
+        .status-approved { background: #e8f5e9; color: #2e7d32; }
+        .status-rejected { background: #fdecea; color: #c33; }
+        .header { background: linear-gradient(135deg, #dc3545, #721c24); color: white; padding: 24px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+    </head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Manage Rentals</h1>
+            <p class="subtitle">Total rentals: <strong><%= rentals.length %></strong></p>
+        </div>
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Owner</th>
+                        <th>Renter</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% rentals.forEach(r => { %>
+                        <tr>
+                            <td><%= r.item ? r.item.name : '-' %></td>
+                            <td><%= r.item && r.item.owner ? r.item.owner.email : '-' %></td>
+                            <td><%= r.renter ? r.renter.email : '-' %></td>
+                            <td>
+                                <% if (r.status === 'approved') { %>
+                                    <span class="status status-approved">Approved</span>
+                                <% } else if (r.status === 'rejected') { %>
+                                    <span class="status status-rejected">Rejected</span>
+                                <% } else { %>
+                                    <span class="status status-pending"><%= r.status %></span>
+                                <% } %>
+                            </td>
+                            <td><%= new Date(r.createdAt).toLocaleString() %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+
+
