@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const cookieParser = require('cookie-parser');
+const session = require('express-session');
 require('dotenv').config();  // Add this line at the top
 
 const app = express();
@@ -10,6 +11,17 @@ const PORT = process.env.PORT || 3000;
 // Set up EJS as the view engine
 app.set('view engine', 'ejs');
 app.set('views', './views');
+
+// Session middleware (needed for admin login)
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: false, // Set to true in production with HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
 
 // Middleware to parse JSON bodies
 app.use(express.json());

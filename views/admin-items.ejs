@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Items - PeerRent</title>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div style="max-width: 1100px; margin: 0 auto; padding: 20px;">
+        <h1>Manage Items</h1>
+        <p>Total: <%= items.length %></p>
+        <table border="1" cellspacing="0" cellpadding="8" width="100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Owner</th>
+                    <th>Price/day</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% items.forEach(it => { %>
+                    <tr>
+                        <td><%= it.name %></td>
+                        <td><%= it.owner ? it.owner.email : '-' %></td>
+                        <td>$<%= it.dailyPrice %></td>
+                        <td><%= new Date(it.createdAt).toLocaleString() %></td>
+                        <td>
+                            <form action="/admin/items/<%= it._id %>/delete" method="POST" onsubmit="return confirm('Delete this item?')">
+                                <button type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+
+

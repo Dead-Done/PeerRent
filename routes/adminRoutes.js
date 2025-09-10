@@ -2,15 +2,20 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const { isAuthenticated, isAdmin } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/adminAuth');
 
-// All routes in this file are protected and require admin privileges
-router.use(isAuthenticated, isAdmin);
+// Admin login page (no auth required)
+router.get('/', adminController.getAdminLogin);
+router.post('/login', adminController.postAdminLogin);
 
-// GET /admin -> The main dashboard page
-router.get('/', adminController.getDashboard);
+// Protected admin routes (require admin session)
+router.get('/dashboard', requireAdmin, adminController.getDashboard);
+router.post('/items/:itemId/delete', requireAdmin, adminController.adminDeleteItem);
+router.post('/logout', adminController.adminLogout);
 
-// POST /admin/items/:itemId/delete -> Admin action to delete an item
-router.post('/items/:itemId/delete', adminController.adminDeleteItem);
+// Management pages
+router.get('/users', requireAdmin, adminController.getUsers);
+router.get('/items', requireAdmin, adminController.getItems);
+router.get('/rentals', requireAdmin, adminController.getRentals);
 
 module.exports = router;

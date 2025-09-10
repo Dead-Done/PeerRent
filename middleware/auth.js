@@ -39,6 +39,12 @@ exports.isAuthenticated = async (req, res, next) => {
 
 // Add this new function to middleware/auth.js
 exports.checkUser = (req, res, next) => {
+  // Skip JWT token checking for admin routes - they use sessions instead
+  if (req.originalUrl && req.originalUrl.startsWith('/admin')) {
+    res.locals.user = null; // Admin system doesn't use the user locals
+    return next();
+  }
+  
   const token = req.cookies.token;
   if (token) {
     jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {

@@ -151,16 +151,25 @@
     <div class="admin-header">
         <h1>🛡️ Admin Dashboard</h1>
         <p>Platform Management & Control Center</p>
+        <div style="margin-top: 15px;">
+            <form action="/admin/logout" method="POST" style="display: inline;">
+                <button type="submit" class="btn btn-danger">Logout</button>
+            </form>
+        </div>
     </div>
     
     <div class="stats-grid">
         <div class="stat-card">
-            <h2 class="stat-number"><%= userCount %></h2>
+            <h2 class="stat-number"><%= totalUsers %></h2>
             <p class="stat-label">Total Users</p>
         </div>
         <div class="stat-card">
-            <h2 class="stat-number"><%= itemCount %></h2>
+            <h2 class="stat-number"><%= totalItems %></h2>
             <p class="stat-label">Total Items Listed</p>
+        </div>
+        <div class="stat-card">
+            <h2 class="stat-number"><%= activeItems %></h2>
+            <p class="stat-label">Active Items</p>
         </div>
     </div>
     
@@ -171,19 +180,19 @@
             <div class="action-card">
                 <h3>User Management</h3>
                 <p>View, edit, and manage all user accounts on the platform</p>
-                <a href="#" class="btn btn-primary">Manage Users</a>
+                <a href="/admin/users" class="btn btn-primary">Manage Users</a>
             </div>
             
             <div class="action-card">
                 <h3>Item Management</h3>
                 <p>Monitor and moderate all listed items across the platform</p>
-                <a href="#" class="btn btn-warning">Manage Items</a>
+                <a href="/admin/items" class="btn btn-warning">Manage Items</a>
             </div>
             
             <div class="action-card">
                 <h3>Rental Oversight</h3>
                 <p>View and manage all rental requests and transactions</p>
-                <a href="#" class="btn btn-primary">View Rentals</a>
+                <a href="/admin/rentals" class="btn btn-primary">View Rentals</a>
             </div>
             
             <div class="action-card">

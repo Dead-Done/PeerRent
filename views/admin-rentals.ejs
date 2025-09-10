@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Rentals - PeerRent</title>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div style="max-width: 1100px; margin: 0 auto; padding: 20px;">
+        <h1>Manage Rentals</h1>
+        <p>Total: <%= rentals.length %></p>
+        <table border="1" cellspacing="0" cellpadding="8" width="100%">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Owner</th>
+                    <th>Renter</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% rentals.forEach(r => { %>
+                    <tr>
+                        <td><%= r.item ? r.item.name : '-' %></td>
+                        <td><%= r.item && r.item.owner ? r.item.owner.email : '-' %></td>
+                        <td><%= r.renter ? r.renter.email : '-' %></td>
+                        <td><%= r.status %></td>
+                        <td><%= new Date(r.createdAt).toLocaleString() %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+
+

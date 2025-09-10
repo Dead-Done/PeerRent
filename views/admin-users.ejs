@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - PeerRent</title>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+        <h1>Manage Users</h1>
+        <p>Total: <%= users.length %></p>
+        <table border="1" cellspacing="0" cellpadding="8" width="100%">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach(u => { %>
+                    <tr>
+                        <td><%= u.email %></td>
+                        <td><%= u.role %></td>
+                        <td><%= new Date(u.createdAt).toLocaleString() %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+
+
