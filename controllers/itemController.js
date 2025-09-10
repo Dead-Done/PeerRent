@@ -4,10 +4,15 @@ const Item = require('../models/Item');
 exports.createItem = async (req, res) => {
   try {
     // Now we can use the authenticated user's ID as the owner
+    // Convert uploaded files to public URLs
+    const uploaded = (req.files || []).map(f => `/uploads/${f.filename}`);
+    const combinedImages = uploaded.slice(0, 10);
+
     const itemData = {
       name: req.body.name,
       description: req.body.description,
       dailyPrice: req.body.dailyPrice,
+      images: combinedImages,
       owner: req.user.id // Use the authenticated user's ID
     };
     
@@ -15,8 +20,9 @@ exports.createItem = async (req, res) => {
     await newItem.save();
     
     // Check if request is from form submission (redirect) or API call (JSON response)
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
-      res.redirect('/my-listings');
+    const ct = req.headers['content-type'] || '';
+    if (ct.includes('application/x-www-form-urlencoded') || ct.includes('multipart/form-data')) {
+      res.redirect('/marketplace?success=listed');
     } else {
       res.status(201).json(newItem);
     }
@@ -51,7 +57,7 @@ exports.getMarketplace = async (req, res) => {
     }
     // Use the 'query' object in your Item.find() call.
     const items = await Item.find(query);
-    res.render('marketplace', { items: items });
+    res.render('marketplace', { items: items, success: req.query.success });
   } catch (err) {
     res.status(500).send('Server Error');
   }
@@ -82,17 +88,21 @@ exports.updateItem = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this item' });
     }
 
+    const uploaded = (req.files || []).map(f => `/uploads/${f.filename}`);
+
     const updateData = {
       name: req.body.name,
       description: req.body.description,
-      dailyPrice: req.body.dailyPrice
+      dailyPrice: req.body.dailyPrice,
+      images: uploaded.length ? uploaded.slice(0, 10) : existingItem.images
       // Note: owner should not be updatable
     };
     
     const item = await Item.findByIdAndUpdate(req.params.id, updateData, { new: true });
     
     // Check if request is from form submission (redirect) or API call (JSON response)
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
+    const ct = req.headers['content-type'] || '';
+    if (ct.includes('application/x-www-form-urlencoded') || ct.includes('multipart/form-data')) {
       res.redirect('/my-listings');
     } else {
       res.json(item);
@@ -142,7 +152,7 @@ exports.getItemsByUser = async (req, res) => {
   try {
     // Now we can filter by the authenticated user's items
     const items = await Item.find({ owner: req.user.id });
-    res.render('myListings', { items: items });
+    res.render('myListings', { items: items, success: req.query.success });
   } catch (err) {
     res.status(500).send('Server Error');
   }

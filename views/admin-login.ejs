@@ -3,42 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - PeerRent</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f5f5f5; }
-        .container { max-width: 420px; margin: 80px auto; background: white; padding: 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        h1 { margin-top: 0; }
-        label { display: block; margin: 12px 0 6px; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { width: 100%; margin-top: 16px; padding: 10px; background: #dc3545; border: none; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .error { background: #fdecea; color: #a12622; padding: 10px; border: 1px solid #f5c2c7; border-radius: 4px; margin-bottom: 12px; }
-    </style>
-    </head>
-<body>
-    <%- include('partials/header') %>
-    <div class="container">
-        <h1>Admin Login</h1>
-        <% if (error) { %>
-            <div class="error"><%= error %></div>
-        <% } %>
-        <form method="POST" action="/admin/login">
-            <label for="adminId">Admin ID</label>
-            <input type="text" id="adminId" name="adminId" required />
-
-            <label for="adminPassword">Password</label>
-            <input type="password" id="adminPassword" name="adminPassword" required />
-
-            <button type="submit">Login</button>
-        </form>
-    </div>
-</body>
-</html>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title || 'Admin Login' %></title>
     <style>
         * {
@@ -165,7 +129,7 @@
             <p>PeerRent Administration Portal</p>
         </div>
 
-        <% if (locals.error) { %>
+        <% if (error) { %>
             <div class="error-message">
                 <%= error %>
             </div>

@@ -4,30 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Users - PeerRent</title>
-</head>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; padding-top: 80px; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 20px; }
+        .title { margin: 0 0 10px 0; }
+        .subtitle { color: #666; margin: 0 0 20px 0; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 12px 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .table th { background: #fafafa; color: #333; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: bold; }
+        .badge-user { background: #e9f5ff; color: #0d6efd; }
+        .badge-admin { background: #fdecea; color: #c33; }
+        .header { background: linear-gradient(135deg, #dc3545, #721c24); color: white; padding: 24px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+    </head>
 <body>
     <%- include('partials/header') %>
-    <div style="max-width: 1000px; margin: 0 auto; padding: 20px;">
-        <h1>Manage Users</h1>
-        <p>Total: <%= users.length %></p>
-        <table border="1" cellspacing="0" cellpadding="8" width="100%">
-            <thead>
-                <tr>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Joined</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% users.forEach(u => { %>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Manage Users</h1>
+            <p class="subtitle">Total users: <strong><%= users.length %></strong></p>
+        </div>
+        <div class="card">
+            <table class="table">
+                <thead>
                     <tr>
-                        <td><%= u.email %></td>
-                        <td><%= u.role %></td>
-                        <td><%= new Date(u.createdAt).toLocaleString() %></td>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Joined</th>
                     </tr>
-                <% }) %>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <% users.forEach(u => { %>
+                        <tr>
+                            <td><%= u.email %></td>
+                            <td>
+                                <% if (u.role === 'admin') { %>
+                                    <span class="badge badge-admin">Admin</span>
+                                <% } else { %>
+                                    <span class="badge badge-user">User</span>
+                                <% } %>
+                            </td>
+                            <td><%= new Date(u.createdAt).toLocaleString() %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>

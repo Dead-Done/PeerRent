@@ -1,22 +1,28 @@
 <!-- views/partials/header.ejs -->
-<nav class="nav">
-  <a href="/">Home</a>
-  <a href="/marketplace">Marketplace</a>
+<nav class="nav" style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#ffffff;border-bottom:1px solid #eee;position:fixed;top:0;left:0;right:0;z-index:100;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+      <img src="/assets/logo.png" alt="PeerRent" style="height:32px;width:auto;object-fit:contain;">
+      <span style="font-weight:800;color:#111;">PeerRent</span>
+    </a>
+  </div>
+  <div style="display:flex;gap:16px;align-items:center;">
+    <a href="/marketplace" style="text-decoration:none;color:#111;">Marketplace</a>
   <% if (user) { %>
     <!-- Links for LOGGED-IN users -->
-    <a href="/my-listings">My Listings</a>
-    <a href="/my-rentals">My Rentals</a>
-    <a href="/manage-rentals">Manage Rentals</a>
+    <a href="/my-listings" style="text-decoration:none;color:#111;">My Listings</a>
+    <a href="/my-rentals" style="text-decoration:none;color:#111;">My Rentals</a>
+    <a href="/manage-rentals" style="text-decoration:none;color:#111;">Manage Rentals</a>
     
     <!-- ADD THIS CONDITIONAL LINK -->
     <% if (user.role === 'admin') { %>
-      <a href="/admin" style="color: red; font-weight: bold;">Admin Dashboard</a>
+      <a href="/admin" style="color:#dc3545;font-weight:bold;text-decoration:none;">Admin</a>
     <% } %>
-    
-    <a href="/api/users/logout">Logout (<%= user.email %>)</a>
+    <a href="/api/users/logout" style="text-decoration:none;color:#111;">Logout (<%= user.email %>)</a>
   <% } else { %>
     <!-- Links for LOGGED-OUT users -->
-    <a href="/login">Login</a>
-    <a href="/register">Register</a>
+    <a href="/login" style="text-decoration:none;color:#111;">Login</a>
+    <a href="/register" style="text-decoration:none;color:#111;">Register</a>
   <% } %>
+  </div>
 </nav>
