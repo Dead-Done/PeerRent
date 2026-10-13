@@ -71,6 +71,7 @@ exports.getItemById = async (req, res) => {
     if (!item) return res.status(404).json({ message: 'Item not found' });
     res.json(item);
   } catch (err) {
+    if (err.name === 'CastError') return res.status(404).json({ message: 'Item not found' });
     res.status(500).json({ message: err.message });
   }
 };
