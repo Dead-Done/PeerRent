@@ -3,6 +3,9 @@ const RentalRequest = require('../models/RentalRequest');
 const Item = require('../models/Item');
 const Review = require('../models/Review');
 
+// Allowed status changes: from -> [to]
+const TRANSITIONS = { pending: ['accepted', 'declined'], accepted: ['completed'] };
+
 // Logic for creating a new rental request
 exports.createRentalRequest = async (req, res) => {
   try {
@@ -28,6 +31,17 @@ exports.createRentalRequest = async (req, res) => {
 
     if (existingRequest) {
       return res.status(400).send('You already have a pending request for this item');
+    }
+
+    // Block if the renter already has an accepted rental for this item
+    const activeRental = await RentalRequest.findOne({
+      item: item._id,
+      renter: req.user.id,
+      status: 'accepted'
+    });
+
+    if (activeRental) {
+      return res.status(400).send('You already have an accepted rental for this item');
     }
 
     // Create a new RentalRequest instance using the item's ID, the renter's ID (from req.user.id), and the item's owner ID.
@@ -63,8 +77,13 @@ exports.updateRentalStatus = async (req, res) => {
       return res.status(403).send('Not authorized to update this rental request');
     }
 
-    // Update its status using the value from req.body.status
-    rentalRequest.status = req.body.status;
+    // Only allow valid status transitions
+    const from = rentalRequest.status;
+    const to = req.body.status;
+    if (!(TRANSITIONS[from] || []).includes(to)) {
+      return res.status(400).send(`Cannot change a ${from} rental to ${to}.`);
+    }
+    rentalRequest.status = to;
 
     // Save the changes
     await rentalRequest.save();

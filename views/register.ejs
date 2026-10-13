@@ -86,6 +86,14 @@
         .nav a:hover {
             text-decoration: underline;
         }
+        .error-message {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -100,6 +108,8 @@
             <h1>Create Your PeerRent Account</h1>
             <p>Join the community of renters and owners</p>
         </div>
+
+        <% if (typeof error !== 'undefined' && error) { %><div class="error-message"><%= error %></div><% } %>
 
         <form action="/api/users/register" method="POST">
             <div class="form-group">

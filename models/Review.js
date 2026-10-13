@@ -61,13 +61,12 @@ const reviewSchema = new mongoose.Schema({
     required: true,
     trim: true
   }
-  object:{
-    type:ObjectId
-    requ
-  }
 }, { 
   timestamps: true    // Tracks when reviews are created and updated
 });
+
+// One review per reviewer per rental
+reviewSchema.index({ rental: 1, reviewer: 1 }, { unique: true });
 
 /**
  * REVIEW SYSTEM EXPLAINED:

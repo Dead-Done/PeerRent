@@ -109,10 +109,10 @@
         <% if (rentalRequests && rentalRequests.length > 0) { %>
             <% rentalRequests.forEach(request => { %>
                 <div class="rental-card">
-                    <h3><%= request.item.name %></h3>
-                    <p><strong>Description:</strong> <%= request.item.description %></p>
-                    <p><strong>Daily Price:</strong> ৳<%= request.item.dailyPrice %></p>
-                    <p><strong>Owner:</strong> <%= request.owner.email %></p>
+                    <h3><%= request.item ? request.item.name : '(deleted item)' %></h3>
+                    <p><strong>Description:</strong> <%= request.item ? request.item.description : '-' %></p>
+                    <p><strong>Daily Price:</strong> ৳<%= request.item ? request.item.dailyPrice : '-' %></p>
+                    <p><strong>Owner:</strong> <%= request.owner ? request.owner.email : '(deleted user)' %></p>
                     <p><strong>Status:</strong> <span class="status <%= request.status %>"><%= request.status.toUpperCase() %></span></p>
                     <p><strong>Requested:</strong> <%= new Date(request.createdAt).toLocaleDateString() %></p>
                     

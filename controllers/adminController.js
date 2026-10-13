@@ -2,7 +2,15 @@
 const User = require('../models/User');
 const Item = require('../models/Item');
 const RentalRequest = require('../models/RentalRequest');
-const { ADMIN_CREDENTIALS } = require('../config/adminConfig');
+const crypto = require('crypto');
+const { removeUploads } = require('../utils/uploads');
+
+// Timing-safe string comparison: hash both sides so lengths always match
+const safeEqual = (a, b) => {
+    const ha = crypto.createHash('sha256').update(String(a || '')).digest();
+    const hb = crypto.createHash('sha256').update(String(b || '')).digest();
+    return crypto.timingSafeEqual(ha, hb);
+};
 
 // Show admin login page
 exports.getAdminLogin = (req, res) => {
@@ -20,11 +28,26 @@ exports.getAdminLogin = (req, res) => {
 // Handle admin login form submission
 exports.postAdminLogin = (req, res) => {
     const { adminId, adminPassword } = req.body;
-    
-    if (adminId === ADMIN_CREDENTIALS.id && adminPassword === ADMIN_CREDENTIALS.password) {
-        // Set admin session
-        req.session.isAdmin = true;
-        res.redirect('/admin/dashboard');
+
+    const idOk = safeEqual(adminId, process.env.ADMIN_ID);
+    const passOk = safeEqual(adminPassword, process.env.ADMIN_PASSWORD);
+
+    if (idOk && passOk) {
+        // New session id on privilege change
+        req.session.regenerate((err) => {
+            if (err) {
+                console.error('Admin session error:', err);
+                return res.redirect('/admin?error=Login failed');
+            }
+            req.session.isAdmin = true;
+            req.session.save((saveErr) => {
+                if (saveErr) {
+                    console.error('Admin session save error:', saveErr);
+                    return res.redirect('/admin?error=Login failed');
+                }
+                res.redirect('/admin/dashboard');
+            });
+        });
     } else {
         res.redirect('/admin?error=Invalid credentials');
     }
@@ -35,13 +58,15 @@ exports.getDashboard = async (req, res) => {
     try {
         const totalUsers = await User.countDocuments();
         const totalItems = await Item.countDocuments();
-        const activeItems = await Item.countDocuments({ status: 'available' });
+        const activeRentals = await RentalRequest.countDocuments({ status: 'accepted' });
+        const pendingRentals = await RentalRequest.countDocuments({ status: 'pending' });
         
         res.render('admin-dashboard', {
             title: 'Admin Dashboard',
             totalUsers,
             totalItems,
-            activeItems
+            activeRentals,
+            pendingRentals
         });
     } catch (error) {
         console.error('Admin dashboard error:', error);
@@ -52,20 +77,30 @@ exports.getDashboard = async (req, res) => {
 // Function for an admin to delete any item
 exports.adminDeleteItem = async (req, res) => {
     try {
-        await Item.findByIdAndDelete(req.params.itemId);
-        res.json({ success: true, message: 'Item deleted successfully' });
+        const item = await Item.findById(req.params.itemId);
+        if (!item) {
+            return res.redirect('/admin/items?error=' + encodeURIComponent('Item not found.'));
+        }
+
+        const activeRental = await RentalRequest.exists({ item: item._id, status: 'accepted' });
+        if (activeRental) {
+            return res.redirect('/admin/items?error=' + encodeURIComponent('This item has an active rental.'));
+        }
+
+        await RentalRequest.updateMany({ item: item._id, status: 'pending' }, { status: 'declined' });
+        await Item.findByIdAndDelete(item._id);
+        await removeUploads(item.images);
+        res.redirect('/admin/items?deleted=1');
     } catch (error) {
         console.error('Admin delete error:', error);
-        res.status(500).json({ error: 'Failed to delete item' });
+        res.redirect('/admin/items?error=' + encodeURIComponent('Failed to delete item.'));
     }
 };
 
 // Admin logout
 exports.adminLogout = (req, res) => {
-    if (req.session) {
-        req.session.isAdmin = false;
-    }
-    res.redirect('/admin');
+    if (!req.session) return res.redirect('/admin');
+    req.session.destroy(() => res.redirect('/admin'));
 };
 
 // List users for admin
@@ -88,7 +123,9 @@ exports.getItems = async (req, res) => {
         const items = await Item.find().populate('owner', 'email').sort({ createdAt: -1 }).limit(100);
         res.render('admin-items', {
             title: 'Manage Items',
-            items
+            items,
+            deleted: req.query.deleted,
+            error: req.query.error
         });
     } catch (error) {
         console.error('Admin items error:', error);
@@ -100,7 +137,6 @@ exports.getItems = async (req, res) => {
 exports.getRentals = async (req, res) => {
     try {
         const rentals = await RentalRequest.find()
-            .populate('item')
             .populate({ path: 'item', populate: { path: 'owner', select: 'email' } })
             .populate('renter', 'email')
             .sort({ createdAt: -1 })

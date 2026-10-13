@@ -26,6 +26,7 @@ const sendLoginCode = async (email, code) => {
     console.log('Login code email sent successfully.');
   } catch (error) {
     console.error('Error sending login code email:', error);
+    throw error;
   }
 };
 

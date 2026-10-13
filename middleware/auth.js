@@ -2,6 +2,10 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+// Browsers (Accept prefers HTML) get redirected to /login; API clients get 401 JSON.
+// With no Accept header or */*, accepts() returns the first type, so 'json' wins.
+const wantsHtml = (req) => !req.headers.authorization && req.accepts(['json', 'html']) === 'html';
+
 exports.isAuthenticated = async (req, res, next) => {
   let token;
 
@@ -17,7 +21,10 @@ exports.isAuthenticated = async (req, res, next) => {
 
   // 3. If there is still no token after checking both places, send an error.
   if (!token) {
-    return res.status(401).send('Not authorized, no token');
+    if (wantsHtml(req)) {
+      return res.redirect('/login');
+    }
+    return res.status(401).json({ message: 'Not authorized, no token' });
   }
 
   // 4. If a token was found, verify it and attach the user to the request.
@@ -27,41 +34,39 @@ exports.isAuthenticated = async (req, res, next) => {
     
     // Check if user exists (token might be valid but user deleted)
     if (!req.user) {
-      return res.status(401).send('Not authorized, user not found');
+      return res.status(401).json({ message: 'Not authorized, user not found' });
     }
     
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
-    return res.status(401).send('Not authorized, token failed');
+    if (wantsHtml(req)) {
+      return res.redirect('/login');
+    }
+    return res.status(401).json({ message: 'Not authorized, token failed' });
   }
 };
 
 // Add this new function to middleware/auth.js
-exports.checkUser = (req, res, next) => {
+exports.checkUser = async (req, res, next) => {
+  res.locals.user = null;
+
   // Skip JWT token checking for admin routes - they use sessions instead
   if (req.originalUrl && req.originalUrl.startsWith('/admin')) {
-    res.locals.user = null; // Admin system doesn't use the user locals
     return next();
   }
-  
-  const token = req.cookies.token;
-  if (token) {
-    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
-      if (err) {
-        res.locals.user = null; // Token is invalid or expired
-        next();
-      } else {
-        // Find the user but exclude the hashedSecret for security
-        let user = await User.findById(decoded.user.id).select('-hashedSecret');
-        res.locals.user = user; // Make user data available in all views
-        next();
-      }
-    });
-  } else {
-    res.locals.user = null; // No token means no user
-    next();
+
+  const token = req.cookies && req.cookies.token;
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Exclude the hashedSecret for security
+    res.locals.user = await User.findById(decoded.user.id).select('-hashedSecret');
+  } catch (err) {
+    res.locals.user = null; // Token is invalid, expired, or lookup failed
   }
+  next();
 };
 
 // Add this new function to middleware/auth.js

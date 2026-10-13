@@ -131,9 +131,9 @@
     <div class="form-container">
         <div class="rental-info">
             <h3>Rental Details</h3>
-            <p><strong>Item:</strong> <%= rentalRequest.item.name %></p>
+            <p><strong>Item:</strong> <%= rentalRequest.item ? rentalRequest.item.name : '(deleted item)' %></p>
             <p><strong>Owner:</strong> <%= rentalRequest.owner.email %></p>
-            <p><strong>Daily Price:</strong> ৳<%= rentalRequest.item.dailyPrice %></p>
+            <p><strong>Daily Price:</strong> ৳<%= rentalRequest.item ? rentalRequest.item.dailyPrice : '-' %></p>
         </div>
 
         <form action="/rentals/<%= rentalRequest._id %>/review" method="POST">

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= status %> - PeerRent</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-top: 80px;
+            background-color: #f5f5f5;
+        }
+        .error-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .error-container h1 {
+            font-size: 3em;
+            margin: 0 0 10px 0;
+            color: #dc3545;
+        }
+        .error-container p {
+            color: #333;
+            margin-bottom: 25px;
+        }
+        .error-container a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .error-container a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="error-container">
+        <h1><%= status %></h1>
+        <p><%= message %></p>
+        <a href="/">Back to home</a>
+    </div>
+</body>
+</html>

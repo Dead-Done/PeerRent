@@ -19,46 +19,60 @@
  * - Average rating calculation for users
  */
 
+const crypto = require('crypto');
 const User = require('../models/User');
 const Review = require('../models/Review');
-const bcrypt = require('bcryptjs');           // For hashing user PINs securely
+const bcrypt = require('bcryptjs');           // For hashing user PINs and OTPs securely
 const jwt = require('jsonwebtoken');         // For creating authentication tokens
 const { sendLoginCode } = require('../config/mailer'); // Email service for OTP delivery
+const { isFormRequest } = require('../utils/http');
+
+const MAX_OTP_ATTEMPTS = 5;
+const GENERIC_LOGIN_ERROR = 'Invalid email, PIN or code.';
+// Used so a lookup for an unknown email still costs one bcrypt comparison
+const DUMMY_HASH = bcrypt.hashSync('0000', 10);
+
+const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+
+// Respond with an error: re-render the view for form posts, JSON for API calls
+function fail(req, res, status, message, view, extra = {}) {
+  if (isFormRequest(req) && view) {
+    return res.status(status).render(view, { error: message, ...extra });
+  }
+  return res.status(status).json({ message });
+}
 
 /**
  * REGISTER USER - Step 1 of Hybrid OTP Authentication
  * Creates a new user account with email and 4-digit PIN
- * 
- * Process:
- * 1. Validates PIN is exactly 4 digits
- * 2. Checks if email already exists
- * 3. Hashes PIN with bcrypt for security
- * 4. Saves user to database
- * 5. Redirects to login page
  * 
  * @param {Object} req.body.email - User's email address (unique identifier)
  * @param {String} req.body.secretPin - User's 4-digit PIN (first part of login key)
  */
 exports.register = async (req, res) => {
   try {
-    const { email, secretPin } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const { secretPin } = req.body;
+
+    if (!email) {
+      return fail(req, res, 400, 'Email is required', 'register');
+    }
 
     // Validate PIN format: must be exactly 4 digits
-    if (!secretPin || secretPin.length !== 4 || !/^\d{4}$/.test(secretPin)) {
-      return res.status(400).json({ message: 'Secret PIN must be exactly 4 digits' });
+    if (typeof secretPin !== 'string' || !/^\d{4}$/.test(secretPin)) {
+      return fail(req, res, 400, 'Secret PIN must be exactly 4 digits', 'register');
     }
 
     // Check for existing user to prevent duplicate accounts
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ message: 'User already exists' });
+      return fail(req, res, 400, 'User already exists', 'register');
     }
 
     // Hash the PIN using bcrypt for security (never store plain text PINs)
     const salt = await bcrypt.genSalt(10);
     const hashedSecret = await bcrypt.hash(secretPin, salt);
 
-    // Create new user with email and hashed PIN
     user = new User({
       email,
       hashedSecret
@@ -66,167 +80,139 @@ exports.register = async (req, res) => {
 
     await user.save();
 
-    // Handle different request types (form submission vs API call)
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
-      res.redirect('/login');  // Form submission → redirect to login page
+    if (isFormRequest(req)) {
+      res.redirect('/login');
     } else {
-      res.status(201).json({ message: 'User registered successfully. Please login.' }); // API call → JSON response
+      res.status(201).json({ message: 'User registered successfully. Please login.' });
     }
   } catch (err) {
     console.error('Registration error:', err.message);
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
-      res.status(500).send('Server Error');
-    } else {
-      res.status(500).json({ message: 'Server Error' });
-    }
+    fail(req, res, 500, 'Server Error', 'register');
   }
 };
 
 /**
  * REQUEST LOGIN CODE - Step 2 of Hybrid OTP Authentication
- * Generates and emails 4-digit code to user (second part of 8-digit login key)
- * 
- * Process:
- * 1. Finds user by email
- * 2. Generates random 4-digit OTP
- * 3. Sets 10-minute expiration time
- * 4. Saves OTP to user record (temporary)
- * 5. Sends OTP via email
- * 6. Shows OTP verification page
+ * Generates and emails a 4-digit code (second part of the 8-digit login key).
+ * The code is stored hashed. Unknown emails get the same response as known
+ * ones so the endpoint cannot be used to discover accounts.
  * 
  * @param {String} req.body.email - User's registered email address
  */
 exports.requestLoginCode = async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = normalizeEmail(req.body.email);
 
-    // Find user by email address
-    const user = await User.findOne({ email });
+    const respondSent = () => {
+      if (isFormRequest(req)) {
+        return res.render('verify-otp', { email });
+      }
+      return res.json({ message: 'Login code sent to your email', email });
+    };
+
+    const user = email ? await User.findOne({ email }) : null;
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return respondSent();
     }
 
-    // Generate random 4-digit OTP (1000-9999)
-    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    // Generate a 4-digit OTP (1000-9999) with a cryptographic RNG
+    const code = crypto.randomInt(1000, 10000).toString();
 
-    // Set OTP expiration to 10 minutes from now for security
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-
-    // Temporarily store OTP and expiration in user record
-    user.otp = code;
-    user.otpExpires = otpExpires;
+    user.otpHash = await bcrypt.hash(code, 10);
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    user.otpAttempts = 0;
     await user.save();
 
-    // Send OTP to user's email using mailer service
-    await sendLoginCode(email, code);
-
-    // Handle different request types
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
-      res.render('verify-otp', { email: email });  // Form → show OTP entry page
-    } else {
-      res.json({ message: 'Login code sent to your email', email: email }); // API → JSON response
+    try {
+      await sendLoginCode(email, code);
+    } catch (mailErr) {
+      return fail(req, res, 503, 'Could not send login code. Please try again later.', 'login');
     }
+
+    return respondSent();
   } catch (err) {
     console.error('Login code request error:', err.message);
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
-      res.status(500).send('Server Error');
-    } else {
-      res.status(500).json({ message: 'Server Error' });
-    }
+    fail(req, res, 500, 'Server Error', 'login');
   }
 };
 
 /**
  * LOGIN WITH OTP - Step 3 of Hybrid OTP Authentication
- * Verifies 8-digit login key (PIN + OTP) and issues JWT token
- * 
- * Process:
- * 1. Validates 8-digit format
- * 2. Splits into PIN (first 4) and OTP (last 4)
- * 3. Verifies OTP hasn't expired
- * 4. Compares OTP with stored value
- * 5. Verifies PIN using bcrypt
- * 6. Issues JWT token in secure cookie
- * 7. Clears temporary OTP data
- * 8. Redirects to user dashboard
+ * Verifies the 8-digit login key (PIN + OTP) and issues a JWT.
+ * Every failure returns the same message and both comparisons always run,
+ * so a caller cannot tell which half was wrong.
  * 
  * @param {String} req.body.email - User's email address
  * @param {String} req.body.fullOtp - 8-digit key (4-digit PIN + 4-digit OTP)
  */
 exports.loginWithOtp = async (req, res) => {
   try {
-    const { email, fullOtp } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const { fullOtp } = req.body;
+    const failView = (status, message) => fail(req, res, status, message, 'verify-otp', { email });
 
     // Validate 8-digit format for login key
-    if (!fullOtp || fullOtp.length !== 8 || !/^\d{8}$/.test(fullOtp)) {
-      return res.status(400).json({ message: 'OTP must be exactly 8 digits' });
+    if (typeof fullOtp !== 'string' || !/^\d{8}$/.test(fullOtp)) {
+      return failView(400, 'Login key must be exactly 8 digits.');
     }
 
     // Split 8-digit key: first 4 = user's PIN, last 4 = email OTP
     const userPin = fullOtp.substring(0, 4);
     const emailCode = fullOtp.substring(4, 8);
 
-    // Find user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    const user = email ? await User.findOne({ email }) : null;
+
+    const otpActive = !!(user && user.otpHash && user.otpExpires && new Date() <= user.otpExpires);
+
+    // Always run both comparisons before deciding
+    const otpOk = await bcrypt.compare(emailCode, otpActive ? user.otpHash : DUMMY_HASH);
+    const pinOk = await bcrypt.compare(userPin, user ? user.hashedSecret : DUMMY_HASH);
+
+    if (!user || !otpActive || !otpOk || !pinOk) {
+      if (otpActive) {
+        const updated = await User.findOneAndUpdate(
+          { _id: user._id, otpHash: { $ne: null } },
+          { $inc: { otpAttempts: 1 } },
+          { new: true }
+        );
+        if (updated && updated.otpAttempts >= MAX_OTP_ATTEMPTS) {
+          updated.otpHash = undefined;
+          updated.otpExpires = undefined;
+          await updated.save();
+          return failView(400, 'Too many attempts. Request a new code.');
+        }
+      }
+      return failView(400, GENERIC_LOGIN_ERROR);
     }
 
-    // Check OTP validity and expiration
-    if (!user.otp || !user.otpExpires || new Date() > user.otpExpires) {
-      return res.status(400).json({ message: 'OTP has expired or is invalid' });
-    }
-
-    // Verify email code matches stored OTP
-    if (emailCode !== user.otp) {
-      return res.status(400).json({ message: 'Invalid email code' });
-    }
-
-    // Verify PIN using bcrypt comparison with hashed PIN
-    const isPinValid = await bcrypt.compare(userPin, user.hashedSecret);
-    if (!isPinValid) {
-      return res.status(400).json({ message: 'Invalid secret PIN' });
-    }
-
-    // Create JWT token payload with user ID
-    const payload = {
-      user: {
-        id: user.id,
-      },
-    };
-
-    // Sign JWT token with secret and 1-hour expiration
+    // Sign JWT token with 1-hour expiration
     const token = jwt.sign(
-      payload,
-      process.env.JWT_SECRET || 'supersecretjwtkey',
+      { user: { id: user.id } },
+      process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    // Clear temporary OTP data from user record for security
-    user.otp = undefined;
+    // Clear temporary OTP data from user record
+    user.otpHash = undefined;
     user.otpExpires = undefined;
+    user.otpAttempts = 0;
     await user.save();
 
-    // Handle different request types
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
-      // Set JWT token in secure, httpOnly cookie (prevents XSS attacks)
+    if (isFormRequest(req)) {
       res.cookie('token', token, {
-        httpOnly: true,                                    // Prevents client-side JavaScript access
-        secure: process.env.NODE_ENV === 'production',    // HTTPS only in production
-        maxAge: 3600000                                    // 1 hour expiration
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 3600000
       });
 
-      res.redirect('/my-listings');  // Form → redirect to user dashboard
+      res.redirect('/my-listings');
     } else {
-      res.json({ token });  // API → return token in response
+      res.json({ token });
     }
   } catch (err) {
     console.error('Login verification error:', err.message);
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
-      res.status(500).send('Server Error');
-    } else {
-      res.status(500).json({ message: 'Server Error' });
-    }
+    fail(req, res, 500, 'Server Error', 'verify-otp', { email: normalizeEmail(req.body.email) });
   }
 };
 
