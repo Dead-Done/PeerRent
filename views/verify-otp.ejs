@@ -110,6 +110,14 @@
         .nav a:hover {
             text-decoration: underline;
         }
+        .error-message {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -135,6 +143,8 @@
                <strong>Step 2:</strong> Add the 4-digit code from your email<br>
                <strong>Example:</strong> PIN: 1234, Email code: 5678 → Enter: 12345678</p>
         </div>
+
+        <% if (typeof error !== 'undefined' && error) { %><div class="error-message"><%= error %></div><% } %>
 
         <form action="/api/users/login/verify-otp" method="POST">
             <input type="hidden" name="email" value="<%= email %>">

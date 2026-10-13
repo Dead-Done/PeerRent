@@ -29,7 +29,7 @@ const itemSchema = new mongoose.Schema({
     trim: true
   },
   
-  // Daily rental price in the platform's currency (USD)
+  // Daily rental price in the platform's currency: BDT (Bangladeshi Taka)
   // Users can rent items on a per-day basis
   dailyPrice: { 
     type: Number, 

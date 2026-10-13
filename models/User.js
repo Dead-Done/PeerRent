@@ -4,7 +4,7 @@
  * 
  * This model supports the Hybrid OTP Authentication System:
  * - Users set a 4-digit PIN (stored as hashedSecret)
- * - System generates 4-digit email code (stored as otp)
+ * - System generates 4-digit email code (stored hashed as otpHash)
  * - Users combine both to create 8-digit login key
  * 
  * Authentication Flow:
@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,        // No duplicate emails allowed
+    lowercase: true,     // Emails are stored lowercase so lookups are case-insensitive
     trim: true          // Remove whitespace
   },
   
@@ -32,10 +33,9 @@ const userSchema = new mongoose.Schema({
     required: true
   },
   
-  // 4-digit One-Time Password sent via email during login
-  // This is part 2 of the 8-digit login key
-  // Temporarily stored and expires after a set time
-  otp: {
+  // bcrypt hash of the 4-digit One-Time Password sent via email during login
+  // This is part 2 of the 8-digit login key; the plain code is never stored
+  otpHash: {
     type: String,
     required: false     // Only present during active login attempts
   },
@@ -45,6 +45,13 @@ const userSchema = new mongoose.Schema({
   otpExpires: {
     type: Date,
     required: false     // Only present when OTP is active
+  },
+  
+  // Failed verification attempts for the current OTP
+  // After 5 failures the OTP is discarded and a new one must be requested
+  otpAttempts: {
+    type: Number,
+    default: 0
   },
   
   // User role for access control (currently unused in favor of session-based admin)
@@ -73,7 +80,7 @@ const userSchema = new mongoose.Schema({
  * 
  * Admin System:
  * - Role field exists but current admin system uses session-based auth
- * - Admin credentials stored separately in config/adminConfig.js
+ * - Admin credentials come from the ADMIN_ID / ADMIN_PASSWORD environment variables
  */
 
 module.exports = mongoose.model('User', userSchema);

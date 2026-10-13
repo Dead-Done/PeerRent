@@ -1,4 +1,8 @@
 const Item = require('../models/Item');
+const RentalRequest = require('../models/RentalRequest');
+const { isFormRequest } = require('../utils/http');
+const escapeRegex = require('../utils/escapeRegex');
+const { removeUploads } = require('../utils/uploads');
 
 // Create a new item
 exports.createItem = async (req, res) => {
@@ -20,14 +24,13 @@ exports.createItem = async (req, res) => {
     await newItem.save();
     
     // Check if request is from form submission (redirect) or API call (JSON response)
-    const ct = req.headers['content-type'] || '';
-    if (ct.includes('application/x-www-form-urlencoded') || ct.includes('multipart/form-data')) {
+    if (isFormRequest(req)) {
       res.redirect('/marketplace?success=listed');
     } else {
       res.status(201).json(newItem);
     }
   } catch (err) {
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
+    if (isFormRequest(req)) {
       res.status(400).send('Error creating item: ' + err.message);
     } else {
       res.status(400).json({ message: err.message });
@@ -49,15 +52,13 @@ exports.getAllItems = async (req, res) => {
 exports.getMarketplace = async (req, res) => {
   try {
     let query = {};
-    // Check if a search query exists in the URL (req.query.search)
-    if (req.query.search && req.query.search.trim() !== '') {
-      // If it exists, add a 'name' property to the 'query' object.
-      // The value should be a case-insensitive regular expression that matches the search term.
-      query.name = { $regex: req.query.search, $options: 'i' };
+    const search = String(req.query.search || '').trim().slice(0, 100);
+    if (search) {
+      const rx = { $regex: escapeRegex(search), $options: 'i' };
+      query = { $or: [{ name: rx }, { description: rx }] };
     }
-    // Use the 'query' object in your Item.find() call.
     const items = await Item.find(query);
-    res.render('marketplace', { items: items, success: req.query.success });
+    res.render('marketplace', { items: items, success: req.query.success, search });
   } catch (err) {
     res.status(500).send('Server Error');
   }
@@ -98,17 +99,21 @@ exports.updateItem = async (req, res) => {
       // Note: owner should not be updatable
     };
     
-    const item = await Item.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    const item = await Item.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
+
+    // New photos replaced the old ones: remove the old files
+    if (uploaded.length) {
+      await removeUploads(existingItem.images);
+    }
     
     // Check if request is from form submission (redirect) or API call (JSON response)
-    const ct = req.headers['content-type'] || '';
-    if (ct.includes('application/x-www-form-urlencoded') || ct.includes('multipart/form-data')) {
+    if (isFormRequest(req)) {
       res.redirect('/my-listings');
     } else {
       res.json(item);
     }
   } catch (err) {
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
+    if (isFormRequest(req)) {
       res.status(400).send('Error updating item: ' + err.message);
     } else {
       res.status(400).json({ message: err.message });
@@ -130,16 +135,26 @@ exports.deleteItem = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this item' });
     }
 
-    const item = await Item.findByIdAndDelete(req.params.id);
+    const activeRental = await RentalRequest.exists({ item: existingItem._id, status: 'accepted' });
+    if (activeRental) {
+      if (isFormRequest(req)) {
+        return res.redirect('/my-listings?error=' + encodeURIComponent('This item has an active rental.'));
+      }
+      return res.status(400).json({ message: 'This item has an active rental.' });
+    }
+
+    await RentalRequest.updateMany({ item: existingItem._id, status: 'pending' }, { status: 'declined' });
+    await Item.findByIdAndDelete(req.params.id);
+    await removeUploads(existingItem.images);
     
     // Check if request is from form submission (redirect) or API call (JSON response)
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
+    if (isFormRequest(req)) {
       res.redirect('/my-listings');
     } else {
       res.json({ message: 'Item deleted' });
     }
   } catch (err) {
-    if (req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded')) {
+    if (isFormRequest(req)) {
       res.status(500).send('Error deleting item: ' + err.message);
     } else {
       res.status(500).json({ message: err.message });
@@ -152,7 +167,7 @@ exports.getItemsByUser = async (req, res) => {
   try {
     // Now we can filter by the authenticated user's items
     const items = await Item.find({ owner: req.user.id });
-    res.render('myListings', { items: items, success: req.query.success });
+    res.render('myListings', { items: items, success: req.query.success, error: req.query.error });
   } catch (err) {
     res.status(500).send('Server Error');
   }

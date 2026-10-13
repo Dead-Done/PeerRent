@@ -96,6 +96,14 @@
         .nav a:hover {
             text-decoration: underline;
         }
+        .error-message {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -117,6 +125,8 @@
                2. We'll send a 4-digit code to your email<br>
                3. Combine your 4-digit PIN + 4-digit code = 8-digit login key</p>
         </div>
+
+        <% if (typeof error !== 'undefined' && error) { %><div class="error-message"><%= error %></div><% } %>
 
         <form action="/api/users/login/request-code" method="POST">
             <div class="form-group">

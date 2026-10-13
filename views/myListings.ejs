@@ -151,6 +151,13 @@
         </div>
     </div>
     <% } %>
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div style="max-width: 1200px; margin: 0 auto 16px auto;">
+        <div style="background:#fdecea;color:#b71c1c;border:1px solid #f5c6cb;padding:12px 16px;border-radius:6px;">
+            <%= error %>
+        </div>
+    </div>
+    <% } %>
 
     <div class="header">
         <h1>My Listings</h1>

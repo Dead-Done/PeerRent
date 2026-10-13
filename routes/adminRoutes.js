@@ -3,10 +3,11 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const { requireAdmin } = require('../middleware/adminAuth');
+const { authLimiter } = require('../middleware/rateLimit');
 
 // Admin login page (no auth required)
 router.get('/', adminController.getAdminLogin);
-router.post('/login', adminController.postAdminLogin);
+router.post('/login', authLimiter, adminController.postAdminLogin);
 
 // Protected admin routes (require admin session)
 router.get('/dashboard', requireAdmin, adminController.getDashboard);

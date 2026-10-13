@@ -41,9 +41,9 @@
                 <tbody>
                     <% rentals.forEach(r => { %>
                         <tr>
-                            <td><%= r.item ? r.item.name : '-' %></td>
-                            <td><%= r.item && r.item.owner ? r.item.owner.email : '-' %></td>
-                            <td><%= r.renter ? r.renter.email : '-' %></td>
+                            <td><%= r.item ? r.item.name : '(deleted item)' %></td>
+                            <td><%= r.item && r.item.owner ? r.item.owner.email : '(deleted user)' %></td>
+                            <td><%= r.renter ? r.renter.email : '(deleted user)' %></td>
                             <td>
                                 <% if (r.status === 'approved') { %>
                                     <span class="status status-approved">Approved</span>
